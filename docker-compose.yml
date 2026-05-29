@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sgs-postgres
+    environment:
+      POSTGRES_USER: sgs_user
+      POSTGRES_PASSWORD: sgs_password_change_me
+      POSTGRES_DB: sgs_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sgs_user -d sgs_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sgs_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sgs-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://sgs_user:sgs_password_change_me@postgres:5432/sgs_db
+      JWT_SECRET: change_me_with_strong_secret_key
+      JWT_EXPIRATION: 7d
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "3001:3001"
+    networks:
+      - sgs_network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sgs-frontend
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+    networks:
+      - sgs_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  sgs_network:
+    driver: bridge

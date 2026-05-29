@@ -1,0 +1,324 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  roleId       String?
+  role         Role?    @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  isActive     Boolean  @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Auditoría
+  auditLogs AuditLog[]
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  members   Member[] @relation("GroupMember")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Member {
+  id String @id @default(uuid())
+
+  // Roles
+  role         String // principal, child, spouse, father, mother, etc.
+  memberNumber Int?    @unique
+  status       String? // active, inactive, moroso, deceased
+
+  // Datos personales (español)
+  name    String
+  surname String
+
+  // Datos japoneses
+  japaneseName    String?
+  japaneseSurname String?
+
+  sex       String?
+  birthDate DateTime?
+
+  // Documento de identidad
+  documentType     String?  // cédula, pasaporte, etc.
+  documentNumber   String?  @unique
+  documentExpDate  DateTime?
+
+  // Estado migratorio
+  visaStatus       String?  // visa, residencia, ciudadanía, etc.
+  countryOrigin    String?
+
+  ruc String?
+
+  email      String?
+  phone      String?
+  bloodType  String?
+  address     String?
+
+  // Datos laborales
+  profession String?
+  workAddress String?
+  workPhone   String?
+
+  // Fallecimiento (opcional)
+  deathDate DateTime?
+
+  // Relación de pareja (cambia si se independiza)
+  partnerId String?
+  partner   Member? @relation("PartnerRelation", fields: [partnerId], references: [id])
+  dependents Member[] @relation("PartnerRelation")
+
+  // Relación administrativa (cambia si se independiza)
+  adminParentId   String?
+  adminParent     Member?  @relation("AdminRelation", fields: [adminParentId], references: [id])
+  adminDependents Member[] @relation("AdminRelation")
+
+  // Relación biológica (NO cambia nunca)
+  biologicalMotherId String?
+  biologicalMother   Member?   @relation("BiologicalMotherRelation", fields: [biologicalMotherId], references: [id])
+  biologicalChildrenFromMother Member[] @relation("BiologicalMotherRelation")
+
+  biologicalFatherId String?
+  biologicalFather   Member?   @relation("BiologicalFatherRelation", fields: [biologicalFatherId], references: [id])
+  biologicalChildrenFromFather Member[] @relation("BiologicalFatherRelation")
+
+  // Datos de dependencia familiar
+  dependencyStart DateTime?
+  responsible     Boolean?
+
+  // Datos de grupo asignado
+  groupId String?
+  group   Group?  @relation("GroupMember", fields: [groupId], references: [id])
+
+  // Datos de pagos y cuotas
+  paymentGroups PaymentGroup[]
+
+  // Datos de Rental
+  rentals Rental[]
+
+  // Asistencia a eventos
+  eventAttendances EventAttendance[]
+
+  deleted Boolean @default(false)
+
+  joinDate  DateTime? @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([groupId])
+  @@index([biologicalMotherId])
+  @@index([biologicalFatherId])
+}
+
+// Pagos y cuotas - Grupo anual
+model PaymentGroup {
+  id        String    @id @default(uuid())
+  memberId  String
+  member    Member    @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  year      Int
+  amount    Float     // Monto mensual editable
+  payments  Payment[] // 12 pagos mensuales
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([memberId, year])
+  @@index([memberId])
+  @@index([year])
+}
+
+// Pagos mensuales individuales
+model Payment {
+  id              String       @id @default(uuid())
+  paymentGroupId  String
+  paymentGroup    PaymentGroup @relation(fields: [paymentGroupId], references: [id], onDelete: Restrict)
+  month           Int          // 1-12
+  dueDate         DateTime
+  paidDate        DateTime?
+  amount          Float?       // Puede diferir del monto mensual por descuentos
+  status          String       @default("pending") // pending, paid
+  paymentMethod   String?      // efectivo, transferencia, cheque, etc.
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([paymentGroupId, month])
+  @@index([paymentGroupId])
+  @@index([status])
+  @@index([paidDate])
+  @@index([dueDate])
+}
+
+// Histórico archivado (cierre técnico anual)
+model OldPayment {
+  id              String   @id @default(uuid())
+  memberId        String
+  year            Int
+  monthsPaidBits  Int      // Bitmap: cada bit = mes pagado (1=paid, 0=unpaid)
+  monthlyAmount   Float
+  archivedAt      DateTime @default(now())
+
+  @@unique([memberId, year])
+  @@index([memberId])
+  @@index([year])
+}
+
+// eventos
+model Event {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  date        DateTime
+  location    String?
+  maxCapacity Int?
+
+  // Organizador
+  organizedBy String?
+
+  // Asistencia
+  attendances EventAttendance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Asistencia a eventos
+model EventAttendance {
+  id       String   @id @default(uuid())
+  eventId  String
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  memberId String
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status   String   @default("confirmed") // confirmed, cancelled, no-show
+  notes    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, memberId])
+  @@index([eventId])
+  @@index([memberId])
+}
+
+// Recursos y alquileres
+model Resource {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  status      String   @default("available") // available, rented, maintenance
+
+  // FK Rental
+  rentals Rental[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Rental {
+  id         String   @id @default(uuid())
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Restrict)
+  memberId   String
+  member     Member   @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  startDate  DateTime
+  endDate    DateTime
+  status     String   @default("active") // active, completed, cancelled
+  amount     Float?   // Monto del alquiler
+  deposit    Float?   // Caución
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([memberId])
+  @@index([resourceId])
+  @@index([status])
+}
+
+// Comunicaciones y anuncios
+model Announcement {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Control de acceso
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  permissions String[] // Array de permisos en formato string
+  users       User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Auditoría de cambios
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entity    String   // "Member", "Payment", "Rental", etc.
+  entityId  String   // ID del registro modificado
+  action    String   // "create", "update", "delete"
+  oldValues Json?    // Valores anteriores (para updates)
+  newValues Json?    // Valores nuevos
+  notes     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+// Registros institucionales - Actas, acuerdos, documentos
+model InstitutionalRecord {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  type        String   // "acta", "acuerdo", "resolucion", "asamblea"
+  recordDate  DateTime
+  content     String?  // Contenido del documento
+  filePath    String?  // Ruta del archivo adjunto
+  fileName    String?  // Nombre del archivo
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([recordDate])
+}
+
+// Administración normativa - Estatutos, reglamentos, políticas
+model Regulation {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  type        String   // "estatuto", "reglamento", "politica", "norma"
+  version     String   @default("1.0")
+  content     String?  // Contenido del documento
+  filePath    String?  // Ruta del archivo adjunto
+  fileName    String?  // Nombre del archivo
+  effectiveDate DateTime?
+  isActive    Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([isActive])
+}

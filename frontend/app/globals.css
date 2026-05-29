@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  font-size: 1vw;
+}
+
+:root {
+  /* Core UI palette */
+  --color-primary: #F5F7FF;
+  --color-primary-dark: #E7ECFF;
+  --color-primary-light: #FFFFFF;
+  --color-primary-rgb: 245 247 255;
+  --color-primary-dark-rgb: 231 236 255;
+  --color-primary-light-rgb: 255 255 255;
+
+  --color-background: #EAF0F8;
+  --color-background-light: #F4F8FD;
+  --color-background-dark: #DCE6F2;
+  --color-background-rgb: 234 240 248;
+  --color-background-light-rgb: 244 248 253;
+  --color-background-dark-rgb: 220 230 242;
+
+  --color-sidebar: #F4F8FD;
+  --color-sidebar-selected: #3E5C76;
+  --color-sidebar-text: #2D3A4A;
+  --color-sidebar-rgb: 244 248 253;
+  --color-sidebar-selected-rgb: 62 92 118;
+  --color-sidebar-text-rgb: 45 58 74;
+
+  --color-text: #1E293B;
+  --color-text-muted: #5E7188;
+  --color-text-rgb: 30 41 59;
+  --color-text-muted-rgb: 94 113 136;
+
+  --color-border: #C7D5E6;
+  --color-border-strong: #9FB3CC;
+  --color-black: #0F172A;
+  --color-border-rgb: 199 213 230;
+  --color-border-strong-rgb: 159 179 204;
+  --color-black-rgb: 15 23 42;
+  --color-white-rgb: 255 255 255;
+
+  /* Surface palette */
+  --color-surface-card: #D8E3F1;
+  --color-surface-card-alt: #C9D7E8;
+  --color-surface-card-rgb: 216 227 241;
+  --color-surface-card-alt-rgb: 201 215 232;
+
+  /* Neutral scale */
+  --color-neutral-200: #E2E8F0;
+  --color-neutral-300: #CBD5E1;
+  --color-neutral-400: #94A3B8;
+  --color-neutral-500: #64748B;
+  --color-neutral-600: #475569;
+  --color-neutral-800: #1F2937;
+  --color-neutral-200-rgb: 226 232 240;
+  --color-neutral-300-rgb: 203 213 225;
+  --color-neutral-400-rgb: 148 163 184;
+  --color-neutral-500-rgb: 100 116 139;
+  --color-neutral-600-rgb: 71 85 105;
+  --color-neutral-800-rgb: 31 41 55;
+
+  /* Semantic scales */
+  --color-danger-50: #FFF1F2;
+  --color-danger-100: #FFE4E6;
+  --color-danger-200: #FECDD3;
+  --color-danger-300: #FDA4AF;
+  --color-danger-400: #FB7185;
+  --color-danger-500: #F43F5E;
+  --color-danger-600: #E11D48;
+  --color-danger-700: #BE123C;
+  --color-danger-800: #9F1239;
+  --color-danger-50-rgb: 255 241 242;
+  --color-danger-100-rgb: 255 228 230;
+  --color-danger-200-rgb: 254 205 211;
+  --color-danger-300-rgb: 253 164 175;
+  --color-danger-400-rgb: 251 113 133;
+  --color-danger-500-rgb: 244 63 94;
+  --color-danger-600-rgb: 225 29 72;
+  --color-danger-700-rgb: 190 18 60;
+  --color-danger-800-rgb: 159 18 57;
+
+  --color-success-500: #10B981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+  --color-success-500-rgb: 16 185 129;
+  --color-success-600-rgb: 5 150 105;
+  --color-success-700-rgb: 4 120 87;
+
+  --color-info-300: #7DD3FC;
+  --color-info-500: #0EA5E9;
+  --color-info-600: #0284C7;
+  --color-info-700: #0369A1;
+  --color-info-300-rgb: 125 211 252;
+  --color-info-500-rgb: 14 165 233;
+  --color-info-600-rgb: 2 132 199;
+  --color-info-700-rgb: 3 105 161;
+
+  --color-brand-emerald-600: #0F766E;
+  --color-brand-emerald-700: #115E59;
+  --color-brand-slate-600: #334155;
+  --color-brand-slate-700: #1E293B;
+  --color-brand-slate-800: #0F172A;
+  --color-brand-orange-500: #F59E0B;
+  --color-brand-amber-600: #D97706;
+  --color-brand-emerald-600-rgb: 15 118 110;
+  --color-brand-emerald-700-rgb: 17 94 89;
+  --color-brand-slate-600-rgb: 51 65 85;
+  --color-brand-slate-700-rgb: 30 41 59;
+  --color-brand-slate-800-rgb: 15 23 42;
+  --color-brand-orange-500-rgb: 245 158 11;
+  --color-brand-amber-600-rgb: 217 119 6;
+
+  /* Scrollbar */
+  --color-scrollbar-track: #B8C6D733;
+  --color-scrollbar-thumb: #6B7F95;
+}
+
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0A0A0A;
+    --foreground: #EDEDED;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-montserrat), sans-serif;
+}
+
+@layer utilities {
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    width: 0.5vw;
+    height: 0.8vh;
+    margin: 2em;
+    background-color: var(--color-scrollbar-track);
+    border-radius: 0.5vw;
+  }
+
+  .no-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb);
+    border-radius: 0.5vw;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    display: block;
+    overflow: auto;
+  }
+}
