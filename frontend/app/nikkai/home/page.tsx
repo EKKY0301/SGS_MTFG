@@ -21,11 +21,6 @@ const quickActions: QuickAction[] = [
         href: "/nikkai/member/list",
     },
     {
-        title: "Registrar cuota",
-        description: "Ir al modulo de contribuciones y pagos.",
-        href: "/nikkai/member/contribution",
-    },
-    {
         title: "Crear evento",
         description: "Agregar un nuevo evento para la comunidad.",
         href: "/nikkai/event/add",
